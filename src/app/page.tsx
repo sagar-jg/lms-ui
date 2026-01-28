@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, Headphones, Layers } from 'lucide-react'
+import { MessageSquare, Headphones, Layers, Lightbulb } from 'lucide-react'
 import { ChatWidget } from '@/components/ChatWidget'
 import { PodcastPanel } from '@/components/PodcastPanel'
 import { FlashCardsPanel } from '@/components/FlashCardsPanel'
+import { InsightsPanel } from '@/components/InsightsPanel'
 import { quantumComputingFlashCards } from '@/data/flashcards'
 import { cn } from '@/lib/utils'
 
@@ -15,7 +16,7 @@ const WELCOME_MESSAGE =
   process.env.NEXT_PUBLIC_WELCOME_MESSAGE ||
   "Hi! I'm Tang, your learning assistant. How can I help you with your studies today?"
 
-type Tab = 'chat' | 'flashcards' | 'podcasts' 
+type Tab = 'chat' | 'flashcards' | 'podcasts' | 'insights' 
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('chat')
@@ -109,6 +110,18 @@ export default function Home() {
               <Headphones className="w-4 h-4" />
               Podcasts
             </button>
+            <button
+              onClick={() => setActiveTab('insights')}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                activeTab === 'insights'
+                  ? 'bg-white text-sagar shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+            >
+              <Lightbulb className="w-4 h-4" />
+              Insights
+            </button>
           </div>
         </div>
 
@@ -130,6 +143,9 @@ export default function Home() {
           )}
           {activeTab === 'podcasts' && (
             <PodcastPanel className="h-full" />
+          )}
+          {activeTab === 'insights' && (
+            <InsightsPanel notebookId={NOTEBOOK_ID} className="h-full" />
           )}
         </div>
 

@@ -18,6 +18,9 @@ import {
   AskStreamEvent,
   AskStreamCallback,
   PodcastEpisode,
+  SourceInsight,
+  CreateInsightRequest,
+  Transformation,
 } from './types'
 
 // Default model ID for chat (gpt-4o-mini)
@@ -348,6 +351,47 @@ class ApiClient {
     }
 
     return response.blob()
+  }
+
+  // Insights API
+  // Helper to ensure insight ID has the correct format (source_insight:id)
+  private formatInsightId(id: string): string {
+    if (!id) return id
+    return id.includes(':') ? id : `source_insight:${id}`
+  }
+
+  async listInsightsForSource(sourceId: string): Promise<SourceInsight[]> {
+    const id = this.formatSourceId(sourceId)
+    return this.request<SourceInsight[]>(`/api/sources/${encodeURIComponent(id)}/insights`)
+  }
+
+  async getInsight(insightId: string): Promise<SourceInsight> {
+    const id = this.formatInsightId(insightId)
+    return this.request<SourceInsight>(`/api/insights/${encodeURIComponent(id)}`)
+  }
+
+  async createInsight(sourceId: string, data: CreateInsightRequest): Promise<SourceInsight> {
+    const id = this.formatSourceId(sourceId)
+    return this.request<SourceInsight>(`/api/sources/${encodeURIComponent(id)}/insights`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteInsight(insightId: string): Promise<void> {
+    const id = this.formatInsightId(insightId)
+    await this.request(`/api/insights/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Transformations API (for generating insights)
+  async listTransformations(): Promise<Transformation[]> {
+    return this.request<Transformation[]>('/api/transformations')
+  }
+
+  async getTransformation(transformationId: string): Promise<Transformation> {
+    return this.request<Transformation>(`/api/transformations/${encodeURIComponent(transformationId)}`)
   }
 }
 

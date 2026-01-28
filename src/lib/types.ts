@@ -236,6 +236,32 @@ export interface PodcastEpisode {
   job_status?: EpisodeStatus | null
 }
 
+// Insight Types
+export interface SourceInsight {
+  id: string
+  source_id: string
+  insight_type: string
+  content: string
+  created: string
+  updated: string
+}
+
+export interface CreateInsightRequest {
+  transformation_id: string
+  model_id?: string
+}
+
+// Transformation Types (used for generating insights)
+export interface Transformation {
+  id: string
+  name: string
+  title?: string
+  description?: string
+  prompt_template?: string
+  created?: string
+  updated?: string
+}
+
 // Widget Configuration
 export interface WidgetConfig {
   apiBaseUrl: string
