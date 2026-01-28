@@ -14,6 +14,17 @@ const nextConfig = {
       },
     ]
   },
+  // API Rewrites: Proxy /api/* requests to FastAPI backend
+  async rewrites() {
+    const internalApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:5055'
+    console.log(`[Next.js Rewrites] Proxying /api/* to ${internalApiUrl}/api/*`)
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${internalApiUrl}/api/:path*`,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
