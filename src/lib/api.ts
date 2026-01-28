@@ -56,6 +56,7 @@ class ApiClient {
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true', // Skip ngrok's browser warning page
       ...(options.headers as Record<string, string>),
     }
 
@@ -240,6 +241,7 @@ class ApiClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
+      'ngrok-skip-browser-warning': 'true', // Skip ngrok's browser warning page
     }
 
     if (this.password) {
@@ -329,7 +331,9 @@ class ApiClient {
   async fetchPodcastAudio(episodeId: string): Promise<Blob> {
     const id = this.formatEpisodeId(episodeId)
 
-    const headers: Record<string, string> = {}
+    const headers: Record<string, string> = {
+      'ngrok-skip-browser-warning': 'true', // Skip ngrok's browser warning page
+    }
     if (this.password) {
       headers['Authorization'] = `Bearer ${this.password}`
     }
