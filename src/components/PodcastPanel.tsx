@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Play, Pause, Volume2, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { Play, Pause, Volume2, ChevronDown, ChevronUp, Loader2, Mic, Clock } from 'lucide-react'
 import { api } from '@/lib/api'
 import { PodcastEpisode, TranscriptEntry, OutlineSegment } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -176,25 +176,42 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
 
   if (episodes.length === 0) {
     return (
-      <div className={cn('flex flex-col items-center justify-center p-8 text-center', className)}>
-        <Volume2 className="w-12 h-12 text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Podcasts Yet</h3>
-        <p className="text-sm text-gray-500 max-w-xs">
-          Create podcasts from your study materials in Open Notebook to listen here.
-        </p>
+      <div className={cn('flex flex-col h-full bg-gradient-to-br from-orange-50 to-amber-50', className)}>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-lg">
+              <Mic className="w-10 h-10 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No Podcasts Yet</h3>
+            <p className="text-gray-600 max-w-xs mx-auto">
+              Create podcasts from your study materials in Open Notebook to listen here.
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn('flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100', className)}>
       {/* Hidden audio element */}
       <audio ref={audioRef} onEnded={handleAudioEnd} className="hidden" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <span className="text-sm text-gray-600">
+          {episodes.length} episode{episodes.length !== 1 ? 's' : ''}
+        </span>
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <Mic className="w-3 h-3" />
+          <span>Audio ready</span>
+        </div>
+      </div>
 
       {/* Episode List */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-3">
-          {episodes.map((episode) => {
+          {episodes.map((episode, index) => {
             const isExpanded = expandedEpisode === episode.id
             const isPlaying = playingEpisode === episode.id
             const isLoadingAudio = loadingAudioEpisode === episode.id
@@ -204,22 +221,27 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
             return (
               <div
                 key={episode.id}
-                className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+                className={cn(
+                  'bg-white rounded-xl border overflow-hidden transition-all duration-200',
+                  isPlaying
+                    ? 'border-sagar/30 shadow-md shadow-sagar/10 ring-1 ring-sagar/20'
+                    : 'border-gray-200 shadow-sm hover:shadow-md'
+                )}
               >
                 {/* Episode Header */}
                 <div className="p-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-4">
                     {/* Play Button */}
                     <button
                       onClick={() => togglePlay(episode)}
                       disabled={isLoadingAudio}
                       className={cn(
-                        'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors',
+                        'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md',
                         isPlaying
-                          ? 'bg-sagar text-white'
+                          ? 'bg-gradient-to-br from-sagar to-sagar/80 text-white scale-105'
                           : isLoadingAudio
-                          ? 'bg-sagar/70 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-gradient-to-br from-sagar/70 to-sagar/50 text-white'
+                          : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-sagar hover:to-sagar/80 hover:text-white hover:scale-105'
                       )}
                     >
                       {isLoadingAudio ? (
@@ -233,13 +255,35 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
 
                     {/* Episode Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-sagar bg-sagar/10 px-2 py-0.5 rounded-full">
+                          Episode {index + 1}
+                        </span>
+                        {isPlaying && (
+                          <span className="flex items-center gap-1 text-xs text-sagar">
+                            <span className="w-1.5 h-1.5 bg-sagar rounded-full animate-pulse" />
+                            Playing
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-gray-900 truncate">
                         {episode.name}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {episode.episode_profile?.name || 'Unknown profile'}
-                        {episode.created && ` • ${formatDate(episode.created)}`}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Mic className="w-3 h-3" />
+                          {episode.episode_profile?.name || 'Podcast'}
+                        </span>
+                        {episode.created && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(episode.created)}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {/* Expand Button */}
@@ -247,7 +291,12 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
                       onClick={() =>
                         setExpandedEpisode(isExpanded ? null : episode.id)
                       }
-                      className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600"
+                      className={cn(
+                        'flex-shrink-0 p-2 rounded-lg transition-colors',
+                        isExpanded
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                      )}
                     >
                       {isExpanded ? (
                         <ChevronUp className="w-5 h-5" />
@@ -259,7 +308,7 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
 
                   {/* Briefing Preview */}
                   {episode.briefing && !isExpanded && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                    <p className="text-sm text-gray-600 mt-3 line-clamp-2 pl-16">
                       {episode.briefing}
                     </p>
                   )}
@@ -267,14 +316,15 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
 
                 {/* Expanded Content */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100 p-4 bg-gray-50">
+                  <div className="border-t border-gray-100 p-4 bg-gradient-to-br from-gray-50 to-slate-50">
                     {/* Briefing */}
                     {episode.briefing && (
                       <div className="mb-4">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-sagar rounded-full"></span>
                           Briefing
                         </h4>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                           {episode.briefing}
                         </p>
                       </div>
@@ -283,20 +333,21 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
                     {/* Outline */}
                     {outline.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-amber-500 rounded-full"></span>
                           Outline
                         </h4>
                         <div className="space-y-2">
                           {outline.map((segment, idx) => (
                             <div
                               key={idx}
-                              className="bg-white rounded p-2 text-sm border border-gray-100"
+                              className="bg-white rounded-lg p-3 text-sm border border-gray-100 shadow-sm"
                             >
                               <span className="font-medium text-gray-900">
                                 {segment.name || `Segment ${idx + 1}`}
                               </span>
                               {segment.description && (
-                                <p className="text-gray-600 mt-1">
+                                <p className="text-gray-600 mt-1 leading-relaxed">
                                   {segment.description}
                                 </p>
                               )}
@@ -309,16 +360,17 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
                     {/* Transcript */}
                     {transcript.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-purple-500 rounded-full"></span>
                           Transcript
                         </h4>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                        <div className="space-y-3 max-h-60 overflow-y-auto bg-white rounded-lg p-3 border border-gray-100">
                           {transcript.map((entry, idx) => (
                             <div key={idx} className="text-sm">
-                              <span className="font-medium text-sagar">
+                              <span className="font-semibold text-sagar">
                                 {entry.speaker || 'Speaker'}:
                               </span>{' '}
-                              <span className="text-gray-700">
+                              <span className="text-gray-700 leading-relaxed">
                                 {entry.dialogue}
                               </span>
                             </div>
