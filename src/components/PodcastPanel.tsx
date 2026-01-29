@@ -78,8 +78,10 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
     }
 
     try {
-      // Fetch with auth headers if password is set
-      const headers: Record<string, string> = {}
+      // Fetch with auth headers and ngrok bypass header
+      const headers: Record<string, string> = {
+        'ngrok-skip-browser-warning': 'true', // Required for ngrok to return audio instead of HTML
+      }
       const password = process.env.NEXT_PUBLIC_API_PASSWORD
       if (password) {
         headers['Authorization'] = `Bearer ${password}`
