@@ -192,26 +192,18 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
 
   return (
     <div className={cn('flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center shadow-md">
-            <Lightbulb className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">Insights</h3>
-            <p className="text-xs text-gray-500">
-              {insights.length} insight{insights.length !== 1 ? 's' : ''} generated
-            </p>
-          </div>
-        </div>
+      {/* Header - Compact */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <span className="text-sm text-gray-600">
+          {insights.length} insight{insights.length !== 1 ? 's' : ''}
+        </span>
         <button
           onClick={fetchInsights}
           disabled={loadingInsights}
-          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-50"
           title="Refresh insights"
         >
-          <RefreshCw className={cn('w-5 h-5', loadingInsights && 'animate-spin')} />
+          <RefreshCw className={cn('w-4 h-4', loadingInsights && 'animate-spin')} />
         </button>
       </div>
 
@@ -324,9 +316,11 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full uppercase">
                         {insight.insight_type}
                       </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(insight.created).toLocaleDateString()}
-                      </span>
+                      {insight.created && (
+                        <span className="text-xs text-gray-400">
+                          {new Date(insight.created).toLocaleDateString()}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600 line-clamp-2">
                       {insight.content.slice(0, 150)}

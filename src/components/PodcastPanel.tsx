@@ -16,6 +16,7 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
   const [error, setError] = useState<string | null>(null)
   const [expandedEpisode, setExpandedEpisode] = useState<string | null>(null)
   const [playingEpisode, setPlayingEpisode] = useState<string | null>(null)
+  const [loadingAudioEpisode, setLoadingAudioEpisode] = useState<string | null>(null)
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({})
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -109,12 +110,18 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
       audioRef.current?.pause()
       setPlayingEpisode(null)
     } else {
-      // Load and play new episode
-      const url = await loadAudioUrl(episode)
-      if (url && audioRef.current) {
-        audioRef.current.src = url
-        audioRef.current.play()
-        setPlayingEpisode(episode.id)
+      // Show loading state while fetching audio
+      setLoadingAudioEpisode(episode.id)
+      try {
+        // Load and play new episode
+        const url = await loadAudioUrl(episode)
+        if (url && audioRef.current) {
+          audioRef.current.src = url
+          audioRef.current.play()
+          setPlayingEpisode(episode.id)
+        }
+      } finally {
+        setLoadingAudioEpisode(null)
       }
     }
   }
@@ -190,6 +197,7 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
           {episodes.map((episode) => {
             const isExpanded = expandedEpisode === episode.id
             const isPlaying = playingEpisode === episode.id
+            const isLoadingAudio = loadingAudioEpisode === episode.id
             const transcript = getTranscriptEntries(episode)
             const outline = getOutlineSegments(episode)
 
@@ -204,14 +212,19 @@ export function PodcastPanel({ className }: PodcastPanelProps) {
                     {/* Play Button */}
                     <button
                       onClick={() => togglePlay(episode)}
+                      disabled={isLoadingAudio}
                       className={cn(
                         'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors',
                         isPlaying
                           ? 'bg-sagar text-white'
+                          : isLoadingAudio
+                          ? 'bg-sagar/70 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       )}
                     >
-                      {isPlaying ? (
+                      {isLoadingAudio ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : isPlaying ? (
                         <Pause className="w-5 h-5" />
                       ) : (
                         <Play className="w-5 h-5 ml-0.5" />
