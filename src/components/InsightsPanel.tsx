@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Lightbulb,
   Plus,
@@ -13,6 +13,8 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { SourceInsight, Transformation, Source } from '@/lib/types'
@@ -37,7 +39,10 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
   const [deletingInsightId, setDeletingInsightId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch sources for the notebook
+  // Track if initial load is done to prevent re-fetching
+  const initialLoadDone = useRef(false)
+
+  // Fetch sources for the notebook (only once on mount)
   const fetchSources = useCallback(async () => {
     if (!notebookId) return
     try {
@@ -45,8 +50,9 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
       setError(null)
       const data = await api.getSources(notebookId)
       setSources(data)
-      if (data.length > 0 && !selectedSourceId) {
-        setSelectedSourceId(data[0].id)
+      // Auto-select first source if none selected
+      if (data.length > 0) {
+        setSelectedSourceId((prev) => prev || data[0].id)
       }
     } catch (err) {
       console.error('Failed to fetch sources:', err)
@@ -54,23 +60,24 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
     } finally {
       setLoadingSources(false)
     }
-  }, [notebookId, selectedSourceId])
+  }, [notebookId])
 
-  // Fetch transformations
+  // Fetch transformations (only once on mount)
   const fetchTransformations = useCallback(async () => {
     try {
       setLoadingTransformations(true)
       const data = await api.listTransformations()
       setTransformations(data)
-      if (data.length > 0 && !selectedTransformation) {
-        setSelectedTransformation(data[0].id)
+      // Auto-select first transformation if none selected
+      if (data.length > 0) {
+        setSelectedTransformation((prev) => prev || data[0].id)
       }
     } catch (err) {
       console.error('Failed to fetch transformations:', err)
     } finally {
       setLoadingTransformations(false)
     }
-  }, [selectedTransformation])
+  }, [])
 
   // Fetch insights for selected source
   const fetchInsights = useCallback(async () => {
@@ -91,16 +98,21 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
     }
   }, [selectedSourceId])
 
-  // Initial data fetch
+  // Initial data fetch (only once)
   useEffect(() => {
-    fetchSources()
-    fetchTransformations()
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true
+      fetchSources()
+      fetchTransformations()
+    }
   }, [fetchSources, fetchTransformations])
 
   // Fetch insights when source changes
   useEffect(() => {
-    fetchInsights()
-  }, [fetchInsights])
+    if (selectedSourceId) {
+      fetchInsights()
+    }
+  }, [selectedSourceId, fetchInsights])
 
   // Create new insight
   const handleCreateInsight = async () => {
@@ -349,9 +361,82 @@ export function InsightsPanel({ notebookId, className }: InsightsPanelProps) {
                 {expandedInsightId === insight.id && (
                   <div className="px-4 pb-4 border-t border-gray-100">
                     <div className="pt-4 prose prose-sm prose-gray max-w-none">
-                      <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // Style tables
+                          table: ({ children }) => (
+                            <div className="my-4 overflow-x-auto">
+                              <table className="min-w-full border-collapse border border-gray-200 text-sm">
+                                {children}
+                              </table>
+                            </div>
+                          ),
+                          thead: ({ children }) => (
+                            <thead className="bg-purple-50">{children}</thead>
+                          ),
+                          tbody: ({ children }) => <tbody>{children}</tbody>,
+                          tr: ({ children }) => (
+                            <tr className="border-b border-gray-200 hover:bg-gray-50">{children}</tr>
+                          ),
+                          th: ({ children }) => (
+                            <th className="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                              {children}
+                            </th>
+                          ),
+                          td: ({ children }) => (
+                            <td className="border border-gray-200 px-3 py-2 text-gray-600">
+                              {children}
+                            </td>
+                          ),
+                          // Style lists
+                          ul: ({ children }) => (
+                            <ul className="list-disc list-inside space-y-1 my-2 text-gray-700">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal list-inside space-y-1 my-2 text-gray-700">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="text-sm leading-relaxed">{children}</li>
+                          ),
+                          // Style headings
+                          h1: ({ children }) => (
+                            <h1 className="text-xl font-bold text-gray-900 mt-4 mb-2">{children}</h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-lg font-bold text-gray-900 mt-3 mb-2">{children}</h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-base font-semibold text-gray-800 mt-3 mb-1">{children}</h3>
+                          ),
+                          // Style paragraphs
+                          p: ({ children }) => (
+                            <p className="text-sm text-gray-700 leading-relaxed my-2">{children}</p>
+                          ),
+                          // Style code
+                          code: ({ children }) => (
+                            <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-purple-700">
+                              {children}
+                            </code>
+                          ),
+                          // Style blockquotes
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-purple-300 pl-4 my-2 italic text-gray-600">
+                              {children}
+                            </blockquote>
+                          ),
+                          // Style strong/bold
+                          strong: ({ children }) => (
+                            <strong className="font-semibold text-gray-900">{children}</strong>
+                          ),
+                        }}
+                      >
                         {insight.content}
-                      </div>
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}
